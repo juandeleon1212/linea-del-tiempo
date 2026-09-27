@@ -263,10 +263,16 @@
       object-fit: contain;
       display: none;
       border-radius: 8px;
+      cursor: zoom-in;
+      transition: transform 0.2s ease;
     }
 
     .slide-img.active {
       display: block;
+    }
+
+    .slide-img:hover {
+      transform: scale(1.01);
     }
 
     .gal-delete-btn {
@@ -382,7 +388,7 @@
       color: #78281F;
     }
 
-    /* Modal Customizado para reemplazar 'prompt' (funciona en iFrames de Notion) */
+    /* Modal Customizado para URLs */
     .custom-modal-backdrop {
       display: none;
       position: fixed;
@@ -469,6 +475,58 @@
 
     .btn-modal-confirm:hover {
       background: #3B4B27;
+    }
+
+    /* Lightbox / Visor de Imagen Pantalla Completa */
+    .lightbox-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .lightbox-backdrop.active {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .lightbox-img {
+      max-width: 95vw;
+      max-height: 90vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #FFFFFF;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+    }
+
+    .lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.4);
     }
 
     @keyframes fadeIn {
@@ -613,7 +671,7 @@
     </div>
   </div>
 
-  <!-- Modal customizado reemplazando 'prompt()' -->
+  <!-- Modal customizado para reemplazar 'prompt()' -->
   <div class="custom-modal-backdrop" id="urlModal">
     <div class="custom-modal-box">
       <h3>🔗 Agregar enlace de Google Drive / Imagen</h3>
@@ -624,6 +682,12 @@
         <button class="btn-modal-confirm" id="confirmModalBtn">Agregar Imagen</button>
       </div>
     </div>
+  </div>
+
+  <!-- Lightbox (Visor de pantalla completa para ver la foto ampliada) -->
+  <div class="lightbox-backdrop" id="lightboxModal">
+    <button class="lightbox-close" id="lightboxCloseBtn">✕</button>
+    <img src="" class="lightbox-img" id="lightboxFullImg" alt="Imagen Ampliada">
   </div>
 
   <script>
@@ -645,6 +709,11 @@
     const driveUrlInput = document.getElementById('driveUrlInput');
     const cancelModalBtn = document.getElementById('cancelModalBtn');
     const confirmModalBtn = document.getElementById('confirmModalBtn');
+
+    // Elementos del Lightbox
+    const lightboxModal = document.getElementById('lightboxModal');
+    const lightboxFullImg = document.getElementById('lightboxFullImg');
+    const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
 
     let currentStage = null;
     let currentPhotoIndex = 0;
@@ -678,19 +747,18 @@
 
     uploadBtn.addEventListener('click', () => fileUploader.click());
 
-    // Convertidor optimizado para Google Drive en Notion
+    // Convertidor optimizado para Google Drive a CDN pública
     function convertGoogleDriveUrl(url) {
-  if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
-    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-    if (match && match[1]) {
-      // Endpoint CDN público optimizado para iFrames externos
-      return `https://lh3.googleusercontent.com/d/${match[1]}=w1000`;
+      if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          return `https://lh3.googleusercontent.com/d/${match[1]}=w1600`;
+        }
+      }
+      return url;
     }
-  }
-  return url;
-}
 
-    // Mostrar modal integrado
+    // Modal de URLs
     driveUrlBtn.addEventListener('click', () => {
       if (!currentStage) return;
       driveUrlInput.value = '';
@@ -817,11 +885,36 @@
       }
 
       slidesContainer.innerHTML = images.map((imgSrc, index) => 
-        `<img src="${imgSrc}" class="slide-img ${index === currentPhotoIndex ? 'active' : ''}" data-index="${index}" onerror="this.alt='Incapaz de cargar imagen. Verifique los permisos en Google Drive.';">`
+        `<img src="${imgSrc}" class="slide-img ${index === currentPhotoIndex ? 'active' : ''}" data-index="${index}" title="Haz clic para ampliar la imagen" onerror="this.alt='Incapaz de cargar imagen. Verifique los permisos en Google Drive.';">`
       ).join('');
+
+      // Escuchar clics en imágenes para abrirlas en grande
+      document.querySelectorAll('.slide-img').forEach(img => {
+        img.addEventListener('click', () => {
+          lightboxFullImg.src = img.src;
+          lightboxModal.classList.add('active');
+        });
+      });
 
       counter.textContent = `${currentPhotoIndex + 1} / ${images.length}`;
     }
+
+    // Funciones del Lightbox
+    lightboxCloseBtn.addEventListener('click', () => {
+      lightboxModal.classList.remove('active');
+    });
+
+    lightboxModal.addEventListener('click', (e) => {
+      if (e.target === lightboxModal) {
+        lightboxModal.classList.remove('active');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightboxModal.classList.contains('active')) {
+        lightboxModal.classList.remove('active');
+      }
+    });
 
     function updateBadges() {
       cards.forEach(card => {
@@ -857,9 +950,7 @@
           localStorage.setItem('notion_timeline_data', JSON.stringify(storeData));
           updateBadges();
           if (currentStage) renderGallery();
-        } catch (err) {
-          // Sin alertas nativas para evitar ser bloqueados por Notion
-        }
+        } catch (err) {}
       };
       reader.readAsText(file);
     });
