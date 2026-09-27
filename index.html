@@ -2,8 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Línea del Tiempo Notion - Olive Moss</title>
+  
+  <!-- PhotoSwipe 5 CSS (Visor nativo con Zoom y Gestos) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@5.4.2/dist/photoswipe.css">
+
   <style>
     * {
       box-sizing: border-box;
@@ -477,58 +481,6 @@
       background: #3B4B27;
     }
 
-    /* Lightbox / Visor de Imagen Pantalla Completa */
-    .lightbox-backdrop {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 10000;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .lightbox-backdrop.active {
-      display: flex;
-      animation: fadeIn 0.2s ease;
-    }
-
-    .lightbox-img {
-      max-width: 95vw;
-      max-height: 90vh;
-      width: auto;
-      height: auto;
-      object-fit: contain;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-    }
-
-    .lightbox-close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.2);
-      color: #FFFFFF;
-      border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      font-size: 1.2rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s ease;
-    }
-
-    .lightbox-close:hover {
-      background: rgba(255, 255, 255, 0.4);
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -671,7 +623,7 @@
     </div>
   </div>
 
-  <!-- Modal customizado para reemplazar 'prompt()' -->
+  <!-- Modal Customizado para URLs -->
   <div class="custom-modal-backdrop" id="urlModal">
     <div class="custom-modal-box">
       <h3>🔗 Agregar enlace de Google Drive / Imagen</h3>
@@ -684,11 +636,46 @@
     </div>
   </div>
 
-  <!-- Lightbox (Visor de pantalla completa para ver la foto ampliada) -->
-  <div class="lightbox-backdrop" id="lightboxModal">
-    <button class="lightbox-close" id="lightboxCloseBtn">✕</button>
-    <img src="" class="lightbox-img" id="lightboxFullImg" alt="Imagen Ampliada">
-  </div>
+  <!-- Script para PhotoSwipe 5 (Zoom y Gestos Táctiles) -->
+  <script type="module">
+    import PhotoSwipeLightbox from 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.2/dist/photoswipe-lightbox.esm.js';
+    import PhotoSwipe from 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.2/dist/photoswipe.esm.js';
+
+    window.openPhotoSwipe = function(images, initialIndex) {
+      const items = images.map(url => ({
+        src: url,
+        w: 0,
+        h: 0
+      }));
+
+      const options = {
+        dataSource: items,
+        index: initialIndex,
+        bgOpacity: 0.92,
+        showHideAnimationType: 'zoom',
+        pswpModule: PhotoSwipe
+      };
+
+      const lightbox = new PhotoSwipeLightbox(options);
+
+      // Calcular dimensiones reales de la foto antes de abrir para zoom perfecto
+      lightbox.on('gettingData', (e) => {
+        const { data, index } = e;
+        if (data.w < 1 || data.h < 1) {
+          const img = new Image();
+          img.src = data.src;
+          img.onload = () => {
+            data.w = img.naturalWidth || 1200;
+            data.h = img.naturalHeight || 800;
+            lightbox.pswp.refreshSlideContent(index);
+          };
+        }
+      });
+
+      lightbox.init();
+      lightbox.loadAndOpen(initialIndex);
+    };
+  </script>
 
   <script>
     const carouselView = document.getElementById('carouselView');
@@ -709,11 +696,6 @@
     const driveUrlInput = document.getElementById('driveUrlInput');
     const cancelModalBtn = document.getElementById('cancelModalBtn');
     const confirmModalBtn = document.getElementById('confirmModalBtn');
-
-    // Elementos del Lightbox
-    const lightboxModal = document.getElementById('lightboxModal');
-    const lightboxFullImg = document.getElementById('lightboxFullImg');
-    const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
 
     let currentStage = null;
     let currentPhotoIndex = 0;
@@ -747,7 +729,7 @@
 
     uploadBtn.addEventListener('click', () => fileUploader.click());
 
-    // Convertidor optimizado para Google Drive a CDN pública
+    // Convertidor optimizado para Google Drive
     function convertGoogleDriveUrl(url) {
       if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
         const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
@@ -885,36 +867,20 @@
       }
 
       slidesContainer.innerHTML = images.map((imgSrc, index) => 
-        `<img src="${imgSrc}" class="slide-img ${index === currentPhotoIndex ? 'active' : ''}" data-index="${index}" title="Haz clic para ampliar la imagen" onerror="this.alt='Incapaz de cargar imagen. Verifique los permisos en Google Drive.';">`
+        `<img src="${imgSrc}" class="slide-img ${index === currentPhotoIndex ? 'active' : ''}" data-index="${index}" title="Haz clic para abrir el visor táctil" onerror="this.alt='Error al cargar imagen. Verifique permisos.';">`
       ).join('');
 
-      // Escuchar clics en imágenes para abrirlas en grande
+      // Al hacer clic en la imagen, abre PhotoSwipe con zoom y gestos
       document.querySelectorAll('.slide-img').forEach(img => {
         img.addEventListener('click', () => {
-          lightboxFullImg.src = img.src;
-          lightboxModal.classList.add('active');
+          if (window.openPhotoSwipe) {
+            window.openPhotoSwipe(images, currentPhotoIndex);
+          }
         });
       });
 
       counter.textContent = `${currentPhotoIndex + 1} / ${images.length}`;
     }
-
-    // Funciones del Lightbox
-    lightboxCloseBtn.addEventListener('click', () => {
-      lightboxModal.classList.remove('active');
-    });
-
-    lightboxModal.addEventListener('click', (e) => {
-      if (e.target === lightboxModal) {
-        lightboxModal.classList.remove('active');
-      }
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && lightboxModal.classList.contains('active')) {
-        lightboxModal.classList.remove('active');
-      }
-    });
 
     function updateBadges() {
       cards.forEach(card => {
