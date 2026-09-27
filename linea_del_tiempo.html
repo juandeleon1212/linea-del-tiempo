@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Línea del Tiempo Notion - Olive Moss</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: transparent;
+      display: flex;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .timeline-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      background: #4A5D32;
+      border-radius: 16px;
+      padding: 24px 16px;
+      border: 1px solid #3B4B27;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      height: auto;
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .timeline-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #F4F1EA;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-header {
+      background: rgba(244, 241, 234, 0.15);
+      color: #F4F1EA;
+      border: 1px solid rgba(244, 241, 234, 0.3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-header:hover {
+      background: rgba(244, 241, 234, 0.3);
+      border-color: #F4F1EA;
+    }
+
+    .carousel-view {
+      position: relative;
+      width: 100%;
+    }
+
+    .carousel-container {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 10px 5px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .carousel-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .card {
+      min-width: 150px;
+      max-width: 160px;
+      background: #FAF8F5;
+      border: 1px solid #DCD6CD;
+      border-radius: 12px;
+      padding: 16px 12px;
+      flex-shrink: 0;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      user-select: none;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .card h4 {
+      font-size: 0.95rem;
+      color: #2C3E35;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card p {
+      font-size: 0.78rem;
+      color: #555555;
+      line-height: 1.3;
+    }
+
+    .card .icon-footer {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .photo-count-badge {
+      font-size: 0.7rem;
+      background: #E8E3D9;
+      color: #4A5D32;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      background-color: #FAF8F5;
+      border: 1px solid #DCD6CD;
+      color: #2C3E35;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 10;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background-color: #FFFFFF;
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    .prev-btn { left: -10px; }
+    .next-btn { right: -10px; }
+
+    /* Vista Detallada */
+    .page-detail {
+      display: none;
+      width: 100%;
+      background-color: #FAF8F5;
+      border-radius: 12px;
+      padding: 20px;
+      box-sizing: border-box;
+      margin-top: 10px;
+    }
+
+    .page-detail.active {
+      display: block;
+      animation: fadeIn 0.28s ease-in-out;
+    }
+
+    .detail-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .back-btn {
+      background-color: #4A5D32;
+      color: #FAF8F5;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background-color: #3B4B27;
+    }
+
+    .detail-content h2 {
+      font-size: 1.4rem;
+      color: #2C3E35;
+      margin-bottom: 6px;
+    }
+
+    .detail-content .date-badge {
+      display: inline-block;
+      font-size: 0.8rem;
+      color: #4A5D32;
+      background: #E8E3D9;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+      font-weight: bold;
+    }
+
+    .gallery-container {
+      position: relative;
+      width: 100%;
+      margin: 12px 0 16px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #3B4B27;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+
+    .gallery-slides {
+      position: relative;
+      width: 100%;
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #3B4B27 0%, #202915 100%);
+      padding: 12px;
+    }
+
+    .slide-img {
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      max-height: 450px;
+      object-fit: contain;
+      display: none;
+      border-radius: 8px;
+    }
+
+    .slide-img.active {
+      display: block;
+    }
+
+    .gal-delete-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(180, 40, 40, 0.85);
+      color: #FFFFFF;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      z-index: 6;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .gal-delete-btn:hover {
+      background: rgba(220, 20, 20, 1);
+      transform: scale(1.1);
+    }
+
+    .gal-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.4);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      z-index: 5;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .gal-nav-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .gal-prev { left: 15px; }
+    .gal-next { right: 15px; }
+
+    .empty-gallery-dropzone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 180px;
+      border: 2px dashed #4A5D32;
+      border-radius: 12px;
+      background: #F4F1EA;
+      color: #4A5D32;
+      cursor: pointer;
+      text-align: center;
+      padding: 20px;
+      width: 100%;
+    }
+
+    .empty-gallery-dropzone:hover {
+      background: #E8E3D9;
+    }
+
+    .gallery-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background-color: #F1ECE3;
+      border-top: 1px solid #DCD6CD;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-gal-action {
+      background: #FAF8F5;
+      border: 1px solid #DCD6CD;
+      color: #2C3E35;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .btn-gal-action:hover {
+      background: #E8E3D9;
+    }
+
+    .btn-gal-danger {
+      color: #A93226;
+      border-color: #E6B0AA;
+    }
+
+    .btn-gal-danger:hover {
+      background: #FADBD8;
+      color: #78281F;
+    }
+
+    /* Modal Customizado para reemplazar 'prompt' (funciona en iFrames de Notion) */
+    .custom-modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .custom-modal-backdrop.active {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .custom-modal-box {
+      background: #FAF8F5;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 1px solid #DCD6CD;
+    }
+
+    .custom-modal-box h3 {
+      font-size: 1rem;
+      color: #2C3E35;
+      margin-bottom: 8px;
+    }
+
+    .custom-modal-box p {
+      font-size: 0.78rem;
+      color: #666;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .custom-modal-box input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #CCC;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      outline: none;
+    }
+
+    .custom-modal-box input[type="text"]:focus {
+      border-color: #4A5D32;
+    }
+
+    .custom-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-modal-cancel {
+      background: #E8E3D9;
+      color: #2C3E35;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .btn-modal-confirm {
+      background: #4A5D32;
+      color: #FAF8F5;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .btn-modal-confirm:hover {
+      background: #3B4B27;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="timeline-wrapper">
+    <div class="timeline-header">
+      <div class="timeline-title">📅 Nuestra Línea de Tiempo</div>
+      <div class="header-actions">
+        <button class="btn-header" id="exportBtn">💾 Exportar Respaldo</button>
+        <button class="btn-header" id="importBtn">📂 Importar Respaldo</button>
+      </div>
+    </div>
+
+    <!-- Inputs ocultos -->
+    <input type="file" id="fileUploader" accept="image/*" multiple style="display: none;">
+    <input type="file" id="backupImporter" accept=".json" style="display: none;">
+
+    <!-- Vista Principal Carrusel -->
+    <div class="carousel-view" id="carouselView">
+      <button class="nav-btn prev-btn" id="prevBtn">❮</button>
+      <button class="nav-btn next-btn" id="nextBtn">❯</button>
+
+      <div class="carousel-container" id="carousel">
+        <div class="card" data-stage="1" data-title="Me Agradas 🌿" data-date="Primeros Encuentros" data-desc="Primeros encuentros y risas compartidas.">
+          <div>
+            <h4>Me Agradas 🌿</h4>
+            <p>Primeros encuentros y risas compartidas.</p>
+          </div>
+          <div class="icon-footer">
+            <span>☕</span>
+            <span class="photo-count-badge" id="badge-1">0 fotos</span>
+          </div>
+        </div>
+
+        <div class="card" data-stage="2" data-title="Me Gustas ✨" data-date="Chispa Inicial" data-desc="La chispa y el interés inicial.">
+          <div>
+            <h4>Me Gustas ✨</h4>
+            <p>La chispa y el interés inicial.</p>
+          </div>
+          <div class="icon-footer">
+            <span>✨</span>
+            <span class="photo-count-badge" id="badge-2">0 fotos</span>
+          </div>
+        </div>
+
+        <div class="card" data-stage="3" data-title="Te Quiero 🤍" data-date="Cariño Mutuo" data-desc="El cariño mutuo y la complicidad.">
+          <div>
+            <h4>Te Quiero 🤍</h4>
+            <p>El cariño mutuo y la complicidad.</p>
+          </div>
+          <div class="icon-footer">
+            <span>🌸</span>
+            <span class="photo-count-badge" id="badge-3">0 fotos</span>
+          </div>
+        </div>
+
+        <div class="card" data-stage="4" data-title="Te Amo ❤️" data-date="Amor Verdadero" data-desc="El compromiso del amor verdadero.">
+          <div>
+            <h4>Te Amo ❤️</h4>
+            <p>El compromiso del amor verdadero.</p>
+          </div>
+          <div class="icon-footer">
+            <span>🤍</span>
+            <span class="photo-count-badge" id="badge-4">0 fotos</span>
+          </div>
+        </div>
+
+        <div class="card" data-stage="5" data-title="Noviazgo 💍" data-date="25 - 09 - 2026" data-desc="En el santuario de la virgen...">
+          <div>
+            <h4>Noviazgo 💍</h4>
+            <p>En el santuario de la virgen...</p>
+          </div>
+          <div class="icon-footer">
+            <span>💍</span>
+            <span class="photo-count-badge" id="badge-5">0 fotos</span>
+          </div>
+        </div>
+
+        <div class="card" data-stage="6" data-title="Matrimonio ⛪" data-date="03.05.29" data-desc="Nuestro pacto ante Dios y los hombres.">
+          <div>
+            <h4>Matrimonio ⛪</h4>
+            <p>Nuestro pacto ante Dios y los hombres.</p>
+          </div>
+          <div class="icon-footer">
+            <span style="font-size: 0.75rem; font-weight: bold; color: #4A5D32;">03.05.29</span>
+            <span class="photo-count-badge" id="badge-6">0 fotos</span>
+          </div>
+        </div>
+
+        <div class="card" data-stage="7" data-title="Hoy 🥳" data-date="Presente" data-desc="Nuestro camino juntos hoy.">
+          <div>
+            <h4>Hoy 🥳</h4>
+            <p>Nuestro camino juntos hoy.</p>
+          </div>
+          <div class="icon-footer">
+            <span>🎉</span>
+            <span class="photo-count-badge" id="badge-7">0 fotos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista Detallada -->
+    <div class="page-detail" id="pageDetail">
+      <div class="detail-bar">
+        <button class="back-btn" id="backBtn">❮ Volver a la línea del tiempo</button>
+      </div>
+      <div class="detail-content">
+        <h2 id="detailTitle">Título</h2>
+        <span class="date-badge" id="detailDate">Fecha</span>
+        <p id="detailBodyDesc" style="margin-bottom: 15px; color: #555;"></p>
+
+        <!-- Galería -->
+        <div class="gallery-container">
+          <button class="gal-delete-btn" id="galDeleteTopBtn" title="Eliminar esta foto">✕</button>
+
+          <button class="gal-nav-btn gal-prev" id="galPrevBtn" style="display: none;">❮</button>
+          <button class="gal-nav-btn gal-next" id="galNextBtn" style="display: none;">❯</button>
+
+          <div class="gallery-slides" id="gallerySlides">
+            <div class="empty-gallery-dropzone" id="dropZone">
+              📷
+              <p>Haz clic para subir fotos o usa un enlace de Google Drive</p>
+            </div>
+          </div>
+          <div class="gallery-toolbar">
+            <div class="toolbar-actions">
+              <button class="btn-gal-action" id="uploadBtn">📁 Foto Local</button>
+              <button class="btn-gal-action" id="driveUrlBtn">🔗 URL / Google Drive</button>
+              <button class="btn-gal-action btn-gal-danger" id="deletePhotoBtn" style="display: none;">🗑️ Eliminar Foto</button>
+            </div>
+            <span id="slideCounter" style="font-size: 0.8rem; color: #4A5D32;">0 / 0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal customizado reemplazando 'prompt()' -->
+  <div class="custom-modal-backdrop" id="urlModal">
+    <div class="custom-modal-box">
+      <h3>🔗 Agregar enlace de Google Drive / Imagen</h3>
+      <p>Pega la URL de tu foto. Si proviene de Google Drive, asegúrate de que el acceso esté configurado en <b>"Cualquier persona con el enlace"</b>.</p>
+      <input type="text" id="driveUrlInput" placeholder="https://drive.google.com/file/d/...">
+      <div class="custom-modal-actions">
+        <button class="btn-modal-cancel" id="cancelModalBtn">Cancelar</button>
+        <button class="btn-modal-confirm" id="confirmModalBtn">Agregar Imagen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const carouselView = document.getElementById('carouselView');
+    const carousel = document.getElementById('carousel');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageDetail = document.getElementById('pageDetail');
+    const backBtn = document.getElementById('backBtn');
+    const cards = document.querySelectorAll('.card');
+
+    const galPrevBtn = document.getElementById('galPrevBtn');
+    const galNextBtn = document.getElementById('galNextBtn');
+    const deletePhotoBtn = document.getElementById('deletePhotoBtn');
+    const galDeleteTopBtn = document.getElementById('galDeleteTopBtn');
+
+    // Elementos del Modal
+    const urlModal = document.getElementById('urlModal');
+    const driveUrlInput = document.getElementById('driveUrlInput');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const confirmModalBtn = document.getElementById('confirmModalBtn');
+
+    let currentStage = null;
+    let currentPhotoIndex = 0;
+    let storeData = JSON.parse(localStorage.getItem('notion_timeline_data') || '{}');
+
+    prevBtn.addEventListener('click', () => carousel.scrollBy({ left: -200, behavior: 'smooth' }));
+    nextBtn.addEventListener('click', () => carousel.scrollBy({ left: 200, behavior: 'smooth' }));
+
+    cards.forEach(card => {
+      card.addEventListener('click', () => {
+        currentStage = card.getAttribute('data-stage');
+        currentPhotoIndex = 0;
+        document.getElementById('detailTitle').textContent = card.getAttribute('data-title');
+        document.getElementById('detailDate').textContent = card.getAttribute('data-date');
+        document.getElementById('detailBodyDesc').textContent = card.getAttribute('data-desc');
+        
+        carouselView.style.display = 'none';
+        pageDetail.classList.add('active');
+        renderGallery();
+      });
+    });
+
+    backBtn.addEventListener('click', () => {
+      pageDetail.classList.remove('active');
+      carouselView.style.display = 'block';
+    });
+
+    const uploadBtn = document.getElementById('uploadBtn');
+    const driveUrlBtn = document.getElementById('driveUrlBtn');
+    const fileUploader = document.getElementById('fileUploader');
+
+    uploadBtn.addEventListener('click', () => fileUploader.click());
+
+    // Convertidor optimizado para Google Drive en Notion
+    function convertGoogleDriveUrl(url) {
+  if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      // Endpoint CDN público optimizado para iFrames externos
+      return `https://lh3.googleusercontent.com/d/${match[1]}=w1000`;
+    }
+  }
+  return url;
+}
+
+    // Mostrar modal integrado
+    driveUrlBtn.addEventListener('click', () => {
+      if (!currentStage) return;
+      driveUrlInput.value = '';
+      urlModal.classList.add('active');
+      driveUrlInput.focus();
+    });
+
+    cancelModalBtn.addEventListener('click', () => {
+      urlModal.classList.remove('active');
+    });
+
+    confirmModalBtn.addEventListener('click', () => {
+      const rawUrl = driveUrlInput.value.trim();
+      if (rawUrl) {
+        const formattedUrl = convertGoogleDriveUrl(rawUrl);
+        if (!storeData[currentStage]) storeData[currentStage] = [];
+        storeData[currentStage].push(formattedUrl);
+        localStorage.setItem('notion_timeline_data', JSON.stringify(storeData));
+        updateBadges();
+        currentPhotoIndex = storeData[currentStage].length - 1;
+        renderGallery();
+      }
+      urlModal.classList.remove('active');
+    });
+
+    fileUploader.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length || !currentStage) return;
+
+      if (!storeData[currentStage]) storeData[currentStage] = [];
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          storeData[currentStage].push(event.target.result);
+          localStorage.setItem('notion_timeline_data', JSON.stringify(storeData));
+          updateBadges();
+          renderGallery();
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    function removeCurrentPhoto() {
+      const images = storeData[currentStage] || [];
+      if (images.length === 0) return;
+
+      images.splice(currentPhotoIndex, 1);
+      
+      if (currentPhotoIndex >= images.length && currentPhotoIndex > 0) {
+        currentPhotoIndex = images.length - 1;
+      }
+
+      storeData[currentStage] = images;
+      localStorage.setItem('notion_timeline_data', JSON.stringify(storeData));
+      updateBadges();
+      renderGallery();
+    }
+
+    deletePhotoBtn.addEventListener('click', removeCurrentPhoto);
+    galDeleteTopBtn.addEventListener('click', removeCurrentPhoto);
+
+    galPrevBtn.addEventListener('click', () => {
+      const images = storeData[currentStage] || [];
+      if (images.length === 0) return;
+      currentPhotoIndex = (currentPhotoIndex - 1 + images.length) % images.length;
+      showActiveSlide();
+    });
+
+    galNextBtn.addEventListener('click', () => {
+      const images = storeData[currentStage] || [];
+      if (images.length === 0) return;
+      currentPhotoIndex = (currentPhotoIndex + 1) % images.length;
+      showActiveSlide();
+    });
+
+    function showActiveSlide() {
+      const images = storeData[currentStage] || [];
+      const slideElements = document.querySelectorAll('.slide-img');
+      const counter = document.getElementById('slideCounter');
+
+      slideElements.forEach((img, idx) => {
+        if (idx === currentPhotoIndex) {
+          img.classList.add('active');
+        } else {
+          img.classList.remove('active');
+        }
+      });
+
+      if (images.length > 0) {
+        counter.textContent = `${currentPhotoIndex + 1} / ${images.length}`;
+      }
+    }
+
+    function renderGallery() {
+      const slidesContainer = document.getElementById('gallerySlides');
+      const counter = document.getElementById('slideCounter');
+      const images = storeData[currentStage] || [];
+
+      if (images.length === 0) {
+        slidesContainer.innerHTML = `
+          <div class="empty-gallery-dropzone" id="dropZone">
+            📷
+            <p>Haz clic para subir fotos o usa un enlace de Google Drive</p>
+          </div>`;
+        document.getElementById('dropZone').addEventListener('click', () => fileUploader.click());
+        counter.textContent = '0 / 0';
+        galPrevBtn.style.display = 'none';
+        galNextBtn.style.display = 'none';
+        deletePhotoBtn.style.display = 'none';
+        galDeleteTopBtn.style.display = 'none';
+        return;
+      }
+
+      deletePhotoBtn.style.display = 'inline-block';
+      galDeleteTopBtn.style.display = 'flex';
+
+      if (images.length > 1) {
+        galPrevBtn.style.display = 'flex';
+        galNextBtn.style.display = 'flex';
+      } else {
+        galPrevBtn.style.display = 'none';
+        galNextBtn.style.display = 'none';
+      }
+
+      slidesContainer.innerHTML = images.map((imgSrc, index) => 
+        `<img src="${imgSrc}" class="slide-img ${index === currentPhotoIndex ? 'active' : ''}" data-index="${index}" onerror="this.alt='Incapaz de cargar imagen. Verifique los permisos en Google Drive.';">`
+      ).join('');
+
+      counter.textContent = `${currentPhotoIndex + 1} / ${images.length}`;
+    }
+
+    function updateBadges() {
+      cards.forEach(card => {
+        const stage = card.getAttribute('data-stage');
+        const count = (storeData[stage] || []).length;
+        const badge = document.getElementById(`badge-${stage}`);
+        if (badge) badge.textContent = `${count} ${count === 1 ? 'foto' : 'fotos'}`;
+      });
+    }
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(storeData));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "notion_timeline_backup.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    });
+
+    const importBtn = document.getElementById('importBtn');
+    const backupImporter = document.getElementById('backupImporter');
+
+    importBtn.addEventListener('click', () => backupImporter.click());
+    backupImporter.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          storeData = JSON.parse(event.target.result);
+          localStorage.setItem('notion_timeline_data', JSON.stringify(storeData));
+          updateBadges();
+          if (currentStage) renderGallery();
+        } catch (err) {
+          // Sin alertas nativas para evitar ser bloqueados por Notion
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    updateBadges();
+  </script>
+</body>
+</html>
